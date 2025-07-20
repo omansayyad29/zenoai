@@ -49,7 +49,7 @@ const BlogTitles = () => {
             <span
               className={`text-xs px-4 py-1 border rounded-full cursor-pointer ${
                 selectedCategory === item
-                  ? "bg-purple-50 text-puple-700"
+                  ? "bg-purple-50 text-purple-700"
                   : "text-gray-500 border-gray-300"
               }`}
               key={item}
