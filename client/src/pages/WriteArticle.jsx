@@ -2,6 +2,11 @@ import { Edit } from "lucide-react";
 import { Sparkle } from "lucide-react";
 import React from "react";
 import { useState } from "react";
+import axios from "axios";
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+import { useAuth } from "@clerk/clerk-react";
+import toast from "react-hot-toast";
+import Markdown from "react-markdown";
 
 const WriteArticle = () => {
   const articleLength = [
@@ -11,9 +16,39 @@ const WriteArticle = () => {
   ];
   const [selectedLength, setSelectedLength] = useState(articleLength[0]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [content, setContent] = useState("");
+
+  const { getToken } = useAuth();
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    try {
+      setLoading(true);
+      const prompt = `Write an article about ${input} in ${selectedLength.text}.`;
+      const data = await axios.post(
+        "/api/ai/generate-article",
+        { prompt, length: selectedLength.length },
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`,
+          },
+        }
+      );
+
+      if (data.data.success === true) {
+        console.log("DATADATA", data);
+
+        setContent(data.data.content);
+        setLoading(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+      setLoading(false);
+    }
+    setLoading(false);
   };
 
   return (
@@ -30,7 +65,7 @@ const WriteArticle = () => {
         <p className="mt-6 text-sm font-medium">Article Topic</p>
         <input
           type="text"
-          className="w-full py-2 px-3 mt-2 outline-none text-sm rounded-md border border-gray-300"
+          className="w-full py-2 px-3 mt-2 outlihttps://chat-app-virid-nine-44.vercel.app/ne-none text-sm rounded-md border border-gray-300"
           placeholder="The future of AI..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -53,8 +88,15 @@ const WriteArticle = () => {
           ))}
         </div>
         <br />
-        <button className="w-full flex gap-2 justify-center items-center bg-gradient-to-r from-[#226BFF] to-[#65ADFF] text-white px-4 py-2 mt-6 rounded-lg cursor-pointer ">
-          <Edit className="w-4 h-4" />
+        <button
+          disabled={loading}
+          className="w-full flex gap-2 justify-center items-center bg-gradient-to-r from-[#226BFF] to-[#65ADFF] text-white px-4 py-2 mt-6 rounded-lg cursor-pointer "
+        >
+          {loading ? (
+            <span className="w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin"></span>
+          ) : (
+            <Edit className="w-4 h-4" />
+          )}
           Generate Article
         </button>
       </form>
@@ -64,12 +106,20 @@ const WriteArticle = () => {
           <Edit className="w-6 text-[#4A7AFF]" />
           <h1 className="text-xl font-semibold">Genearated Article</h1>
         </div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
-            <Edit className="w-9 h-9" />
-            <p>Enter a topic and click "Generate Article" to get started</p>
+        {!content ? (
+          <div className="flex-1 flex justify-center items-center">
+            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+              <Edit className="w-9 h-9" />
+              <p>Enter a topic and click "Generate Article" to get started</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-3 h-full overflow-y-scroll text-sm text-slate-600">
+            <div className="reset-tw">
+              <Markdown>{content}</Markdown>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

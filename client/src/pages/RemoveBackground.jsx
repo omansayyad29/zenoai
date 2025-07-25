@@ -1,14 +1,47 @@
+import { useAuth } from "@clerk/clerk-react";
 import { Sparkles } from "lucide-react";
 import { Eraser } from "lucide-react";
-
+import axios from "axios";
 import React from "react";
 import { useState } from "react";
+import toast from "react-hot-toast";
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 const RemoveBackground = () => {
   const [input, setInput] = useState("");
 
+  const [loading, setLoading] = useState(false);
+  const [content, setContent] = useState("");
+  const { getToken } = useAuth();
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    try {
+      setLoading(true);
+      const formdata = new FormData();
+      formdata.append("image", input);
+
+      const data = await axios.post(
+        "/api/ai/remove-image-background",
+        formdata,
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`,
+          },
+        }
+      );
+
+      if (data.data.success === true) {
+        console.log("DATADATA", data);
+
+        setContent(data.data.content);
+      } else {
+        toast.error(data.data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+    setLoading(false);
   };
 
   return (
@@ -34,23 +67,43 @@ const RemoveBackground = () => {
           Supports JPG, JPEG, PNG and other image formats
         </p>
 
-        <button className="w-full flex gap-2 justify-center items-center bg-gradient-to-r from-[#f6ab4a] to-[#ff4938] text-white px-4 py-2 mt-6 rounded-lg cursor-pointer ">
-          <Eraser className="w-4 h-4" />
+        <button
+          disabled={loading}
+          className="w-full flex gap-2 justify-center items-center bg-gradient-to-r from-[#f6ab4a] to-[#ff4938] text-white px-4 py-2 mt-6 rounded-lg cursor-pointer "
+        >
+          {loading ? (
+            <span className="w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin"></span>
+          ) : (
+            <Eraser className="w-4 h-4" />
+          )}
           Remove Background
         </button>
       </form>
       {/* right column */}
-      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 max-h-96">
+
+      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 max-h-full">
         <div className="flex items-center gap-3">
           <Eraser className="w-6 text-[#ff4938]" />
           <h1 className="text-xl font-semibold">Processed Images</h1>
         </div>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
-            <Eraser className="w-9 h-9" />
-            <p>Upload an image and click "Remove Background" to get started</p>
+        {!content ? (
+          <div className="flex-1 flex justify-center items-center">
+            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+              <Eraser className="w-9 h-9" />
+              <p>
+                Upload an image and click "Remove Background" to get started
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-3 h-full">
+            <img
+              src={content}
+              alt="generated image"
+              className="w-full h-full"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
