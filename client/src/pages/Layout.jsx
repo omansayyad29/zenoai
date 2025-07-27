@@ -16,7 +16,7 @@ const Layout = () => {
       <nav className="w-full px-8 min-h-14 flex items-center justify-between border-b border-gray-200">
         <img
           className="w-32 sm:w-44 cursor-pointer"
-          src={assets.logo}
+          src="/logo1.png"
           alt=""
           onClick={() => navigate("/")}
         />
