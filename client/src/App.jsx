@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Community from "./pages/Community";
 import { useAuth } from "@clerk/clerk-react";
 import { Toaster } from "react-hot-toast";
+import TextToSpeech from "./pages/TextToSpeech";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
           <Route index element={<Dashboard />} />
           <Route path="write-article" element={<WriteArticle />} />
           <Route path="blog-titles" element={<BlogTitles />} />
+          <Route path="text-to-speech" element={<TextToSpeech />} />
           <Route path="generate-images" element={<GenerateImages />} />
           <Route path="remove-background" element={<RemoveBackground />} />
           <Route path="remove-object" element={<RemoveObject />} />

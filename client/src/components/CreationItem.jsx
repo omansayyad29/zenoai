@@ -22,21 +22,29 @@ const CreationItem = ({ item }) => {
       </div>
       {expanded && (
         <div className="mt-4">
-          {item.type === "image" ? (
-            <div>
-              <img
-                src={item.content}
-                alt="Image"
-                className="mt-3 w-full max-w-md"
-              />
-            </div>
-          ) : (
-            <div className="mt-3 h-full overflow-y-scroll text-sm text-slate-700">
-              <div className="reset-tw">
-                <Markdown>{item.content}</Markdown>
-              </div>
-            </div>
-          )}
+         {item.type === "image" ? (
+  <div>
+    <img
+      src={item.content}
+      alt="Image"
+      className="mt-3 w-full max-w-md"
+    />
+  </div>
+) : item.type === "audio" ? (
+  <div className="mt-3">
+    <audio controls className="w-full max-w-md">
+      <source src={item.content} type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+) : (
+  <div className="mt-3 h-full overflow-y-scroll text-sm text-slate-700">
+    <div className="reset-tw">
+      <Markdown>{item.content}</Markdown>
+    </div>
+  </div>
+)}
+
         </div>
       )}
     </div>

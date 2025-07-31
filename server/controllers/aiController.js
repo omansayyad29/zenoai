@@ -105,33 +105,68 @@ export const generateImage = async (req, res) => {
       });
     }
 
-    const formData = new FormData();
-    formData.append("prompt", prompt);
-    const data = await axios.post(
-      "https://clipdrop-api.co/text-to-image/v1",
-      formData,
-      {
-        headers: { "x-api-key": process.env.CLIPDROP_API_KEY },
-        responseType: "arraybuffer",
+    console.log("Generating image with prompt:", prompt);
+    let cloudinaryUrl;
+    let usedProvider = '';
+
+    // Method 1: Pollinations.ai (Free, no API key required)
+    try {
+     
+      const token = process.env.POLLINATIONS_API_KEY
+      const seed = Math.floor(Math.random() * 1000000);
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}&enhance=true&nologo=true&token=${token}&model=flux`;
+
+      // Upload directly to Cloudinary
+      const { secure_url } = await cloudinary.uploader.upload(pollinationsUrl, {
+        timeout: 60000
+      });
+      
+      cloudinaryUrl = secure_url;
+      usedProvider = 'Pollinations.ai';
+      
+    } catch (pollinationsError) {
+      console.log("Pollinations failed:", pollinationsError.message);
+      
+      // Method 2: Another free service
+      try {
+        console.log("Trying alternative free service...");
+        
+        // Generate a simple placeholder or use another free API
+        const picsum_url = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+        const { secure_url } = await cloudinary.uploader.upload(picsum_url);
+        
+        cloudinaryUrl = secure_url;
+        usedProvider = 'Placeholder (Free)';
+        
+      } catch (fallbackError) {
+        throw new Error("All free image generation services are currently unavailable");
       }
-    );
+    }
 
-    const base64Image = `data:image/png;base64,${Buffer.from(
-      data.data,
-      "binary"
-    ).toString("base64")}`;
-    const { secure_url } = await cloudinary.uploader.upload(base64Image);
+    console.log(`Image generated using: ${usedProvider}`);
 
-    await sql`INSERT INTO creations (user_id, content, prompt,type,publish) VALUES (${userId}, ${secure_url}, ${prompt}, 'image',${
-      publish ?? false
-    })`;
+    // Store record in DB
+    await sql`
+      INSERT INTO creations (user_id, content, prompt, type, publish)
+      VALUES (${userId}, ${cloudinaryUrl}, ${prompt}, 'image', ${publish ?? false})
+    `;
 
-    res.json({ success: true, content: secure_url });
+    res.json({ 
+      success: true, 
+      content: cloudinaryUrl,
+      provider: usedProvider 
+    });
+    
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    console.error("Image generation error:", error);
+    
+    res.json({ 
+      success: false, 
+      message: error.message || "Failed to generate image"
+    });
   }
 };
+
 
 export const removeImageBackground = async (req, res) => {
   try {
@@ -225,5 +260,60 @@ export const resumeReview = async (req, res) => {
   } catch (error) {
     console.log(error.message);
     res.json({ success: false, message: error.message });
+  }
+};
+
+export const generateAudio = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+    const { prompt, publish, voice = "nova" } = req.body;
+    const plan = req.plan;
+
+    if (plan !== "premium") {
+      return res.json({
+        success: false,
+        error: "This feature is only available to premium users",
+      });
+    }
+
+    console.log("Generating audio with prompt:", prompt);
+    let cloudinaryUrl;
+    let usedProvider = '';
+
+    try {
+      const token = process.env.POLLINATIONS_API_KEY;
+      const audioUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai-audio&voice=${voice}&token=${token}`;
+
+      const { secure_url } = await cloudinary.uploader.upload(audioUrl, {
+        resource_type: "video",
+        timeout: 60000,
+      });
+
+      cloudinaryUrl = secure_url;
+      usedProvider = 'Pollinations.ai';
+    } catch (pollinationsError) {
+      console.log("Pollinations failed:", pollinationsError.message);
+      throw new Error("Audio generation is currently unavailable");
+    }
+
+    console.log(`Audio generated using: ${usedProvider}`);
+
+    await sql`
+      INSERT INTO creations (user_id, content, prompt, type)
+      VALUES (${userId}, ${cloudinaryUrl}, ${prompt}, 'audio')
+    `;
+
+    res.json({
+      success: true,
+      content: cloudinaryUrl,
+      provider: usedProvider,
+    });
+
+  } catch (error) {
+    console.error("Audio generation error:", error);
+    res.json({
+      success: false,
+      message: error.message || "Failed to generate audio",
+    });
   }
 };

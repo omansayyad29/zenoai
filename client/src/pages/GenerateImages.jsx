@@ -7,7 +7,28 @@ import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 const GenerateImages = () => {
-  const imageStyle = ["Realistic", "Ghibli", "Anime", "Cartoon", "Fantasy"];
+const imageStyle = [
+  "Realistic",
+  "Photorealistic",
+  "Studio Lighting",
+  "4K Ultra HD",
+  "Ghibli",
+  "Anime",
+  "Cartoon",
+  "Fantasy",
+  "Cinematic",
+  "Digital Painting",
+  "Hyper Detailed",
+  "Vibrant Colors",
+  "Soft Lighting",
+  "Isometric Art",
+  "Low Poly",
+  "Cyberpunk",
+  "Neon Glow",
+  "Dark Mode",
+  "Pixel Art",
+  "Surrealism"
+];
   const [selectedStyle, setSelectedStyle] = useState(imageStyle[0]);
   const [input, setInput] = useState("");
   const [publish, setPublish] = useState(false);

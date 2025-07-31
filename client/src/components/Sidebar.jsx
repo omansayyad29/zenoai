@@ -1,6 +1,6 @@
 import React from "react";
 import { Protect, useClerk, useUser } from "@clerk/clerk-react";
-import { House } from "lucide-react";
+import { House, Music } from "lucide-react";
 import { SquarePen } from "lucide-react";
 import { Hash } from "lucide-react";
 import { Image } from "lucide-react";
@@ -25,6 +25,11 @@ const navItems = [
     to: "/ai/blog-titles",
     label: "Blog Titles",
     Icon: Hash,
+  },
+  {
+    to: "/ai/text-to-speech",
+    label: "Text to Speech",
+    Icon: Music,
   },
   {
     to: "/ai/generate-images",
